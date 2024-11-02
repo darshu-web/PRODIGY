@@ -1,1 +1,74 @@
+# Importing necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.impute import SimpleImputer
+import numpy as np
+
+# Load datasets
+train_data = pd.read_csv('C:/Users/nagaj/Downloads/house-prices-advanced-regression-techniques/train.csv')
+test_data = pd.read_csv('C:/Users/nagaj/Downloads/house-prices-advanced-regression-techniques/test.csv')
+
+# Checking the structure of the datasets
+print("Train Data Sample:")
+print(train_data.head())
+print("\nTest Data Sample:")
+print(test_data.head())
+
+# The target column is 'SalePrice'
+# Separate features and target in train data
+X = train_data.drop(columns=['SalePrice'])
+y = train_data['SalePrice']
+
+# Preserve 'Id' from the test data
+test_ids = test_data['Id']
+
+# Handle categorical columns by using one-hot encoding
+X = pd.get_dummies(X)
+test_data = pd.get_dummies(test_data)
+
+# Align the train and test data by filling missing columns with zeros
+X, test_data = X.align(test_data, join='left', axis=1, fill_value=0)
+
+# Handle missing values using SimpleImputer
+# For numerical columns: fill missing values with the mean
+numerical_cols = X.select_dtypes(include=['float64', 'int64']).columns
+
+# Impute missing values in numerical columns with the mean
+imputer_num = SimpleImputer(strategy='mean')
+X[numerical_cols] = imputer_num.fit_transform(X[numerical_cols])
+test_data[numerical_cols] = imputer_num.transform(test_data[numerical_cols])
+
+# Preprocessing (Standardization)
+scaler = StandardScaler()
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train = scaler.fit_transform(X_train)
+X_val = scaler.transform(X_val)
+X_test = scaler.transform(test_data)
+
+# Building RandomForest Regressor model (for regression tasks)
+model = RandomForestRegressor(random_state=42)
+model.fit(X_train, y_train)
+
+# Making predictions on validation data
+val_predictions = model.predict(X_val)
+
+# Evaluating performance on validation data
+val_rmse = np.sqrt(mean_squared_error(y_val, val_predictions))
+print(f'Validation RMSE: {val_rmse}')
+
+# Making predictions on test data
+test_predictions = model.predict(X_test)
+
+# Creating a submission DataFrame
+submission = pd.DataFrame({
+    'Id': test_ids,  # Using the preserved 'Id' column
+    'SalePrice': test_predictions
+})
+
+# Saving submission to CSV file
+submission.to_csv('C:/Users/nagaj/Downloads/house-prices-advanced-regression-techniques/submission.csv', index=False)
+print("Submission file created successfully!")
 
