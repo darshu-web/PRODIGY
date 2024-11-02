@@ -1,1 +1,57 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+
+# Load the dataset
+file_path = 'Mall_Customers.csv'  
+data = pd.read_csv(file_path)
+
+# Selecting the features for clustering
+X = data[['Annual Income (k$)', 'Spending Score (1-100)']]
+
+
+# Using the Elbow method to find the optimal number of clusters
+inertia = []  # List to store the sum of squared distances for each k
+
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k, random_state=0)
+    kmeans.fit(X)
+    inertia.append(kmeans.inertia_)
+
+
+# Plotting the Elbow graph
+plt.figure(figsize=(8, 6))
+plt.plot(range(1, 11), inertia, marker='o')
+plt.title('Elbow Method for Optimal k', fontsize=12)
+plt.xlabel('Number of Clusters (k)', fontsize=10)
+plt.ylabel('Inertia', fontsize=10)
+plt.xticks(range(1, 11))
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
+
+
+
+# Applying K-means clustering with the chosen number of clusters (e.g., k=5)
+kmeans = KMeans(n_clusters=5, random_state=0)
+clusters = kmeans.fit_predict(X)
+
+# Adding the cluster labels to the dataset
+data['Cluster'] = clusters
+
+# Visualizing the clusters
+plt.figure(figsize=(8, 6))
+for cluster in range(5):
+    cluster_data = data[data['Cluster'] == cluster]
+    plt.scatter(cluster_data['Annual Income (k$)'], cluster_data['Spending Score (1-100)'], label=f'Cluster {cluster}', alpha=0.6)
+
+# Plotting the cluster centroids
+centroids = kmeans.cluster_centers_
+plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red', marker='X', label='Centroids')
+
+plt.title('Customer Segmentation using K-means (k=5)', fontsize=12)
+plt.xlabel('Annual Income (k$)', fontsize=10)
+plt.ylabel('Spending Score (1-100)', fontsize=10)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
 
